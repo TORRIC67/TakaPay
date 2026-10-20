@@ -4,7 +4,7 @@
 services:
   # ---- Backend (FastAPI) ----
   - type: web
-    name: smarttaka-api
+    name: takapay-api
     runtime: python
     rootDir: backend
     plan: free
@@ -15,7 +15,6 @@ services:
         sync: false   # paste the Neon connection string in the Render dashboard (never commit it)
       - key: SECRET_KEY
         generateValue: true
-      # The next two must be the REAL address of your frontend (Render may add letters if the name is taken):
       - key: CORS_ORIGINS
         value: '["https://takapay.onrender.com/"]'
       - key: APP_URL
@@ -31,7 +30,7 @@ services:
       - key: MONTHLY_FEE_TZS
         value: "200"
       - key: APP_NAME
-        value: Taka Pay
+        value: TakaPay
       - key: BANK_ACCOUNT_NUMBER
         value: "31410034454"
       - key: BANK_NAME
@@ -55,7 +54,7 @@ services:
 
   # ---- Frontend (React + Vite, static) ----
   - type: web
-    name: smarttaka
+    name: takapay
     runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build

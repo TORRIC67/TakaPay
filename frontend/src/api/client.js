@@ -7,8 +7,7 @@ import { t } from "../i18n";
 // the backend is assumed to be on the SAME machine the page was opened from, port 8000: opened as
 // localhost:5173 -> localhost:8000, opened from a phone as 192.168.x.x:5173 -> 192.168.x.x:8000.
 // So the same running app works on the PC and on a phone, on any network, with no settings to change.
-export const API = import.meta.env.VITE_API_URL || `${window.location.protocol}//${window.location.hostname}:8000`;
-
+export const API = "https://takapay-api.onrender.com";
 export const getToken = () => localStorage.getItem("token");
 export const setToken = (t) => (t ? localStorage.setItem("token", t) : localStorage.removeItem("token"));
 

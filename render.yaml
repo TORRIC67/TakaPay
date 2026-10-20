@@ -31,7 +31,7 @@ services:
       - key: MONTHLY_FEE_TZS
         value: "200"
       - key: APP_NAME
-        value: Smart Taka
+        value: Taka Pay
       - key: BANK_ACCOUNT_NUMBER
         value: "31410034454"
       - key: BANK_NAME

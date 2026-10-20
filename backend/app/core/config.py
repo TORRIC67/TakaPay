@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     # ---- branding: the ONE place the system name lives. Change it here (or APP_NAME in .env / Render)
     # and it changes everywhere: login page, headers, browser tab, SMS texts, PDFs, payment descriptions.
     # The logo is the file backend/brand/logo.png (+ brand/favicon.png for the browser-tab icon).
-    APP_NAME: str = "Smart Taka"
+    APP_NAME: str = "Taka Pay"
     SHOW_NAME_BESIDE_LOGO: bool = True  # set false when the logo image already contains the name
 
     # A customer only sees their payments from the last N months (a rolling window).

@@ -1,4 +1,4 @@
-# Kuhost Smart Taka bure (Render + Neon)
+# Kuhost Taka Pay bure (Render + Neon)
 
 Muundo: **Frontend** (Render Static Site) -> **Backend** (Render Web Service) -> **Database** (Neon).
 Hakuna kadi ya benki inayohitajika kuanza. Hali ilikaguliwa Oktoba 2026; masharti ya mipango ya bure hubadilika, angalia tovuti zao kabla ya kuamua.

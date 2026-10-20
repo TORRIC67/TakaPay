@@ -1,6 +1,6 @@
 """Branding: the system name and logo, in one place.
 
-  * Name: APP_NAME in config.py / .env (default "Smart Taka"). Every SMS text, PDF, payment
+  * Name: APP_NAME in config.py / .env (default "Taka Pay"). Every SMS text, PDF, payment
     description, the API title and (through GET /brand) the whole website read it from there.
   * Logo: the PNG file  backend/brand/logo.png  (a wide logo, transparent background looks best).
     The small icon in the browser tab is  backend/brand/favicon.png  (square). If favicon.png is

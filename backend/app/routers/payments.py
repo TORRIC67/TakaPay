@@ -181,7 +181,7 @@ def wallet_topup(
     user=Depends(get_current_user),
     provider: PaymentProvider = Depends(get_provider),
 ):
-    """Sends a USSD push for the customer to add money to their Smart Taka wallet."""
+    """Sends a USSD push for the customer to add money to their Taka Pay wallet."""
     customer = db.get(Customer, body.customer_id)
     if customer is None:
         raise HTTPException(404, "Customer not found")

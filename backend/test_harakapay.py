@@ -37,7 +37,7 @@ def main():
     try:
         print("Balance:", hp.get_balance())
 
-        result = hp.collect(phone, amount, "Smart Taka test")
+        result = hp.collect(phone, amount, "Taka Pay test")
         print(f"USSD push sent. order_id={result.order_id} fee={result.fee} net={result.net_amount}")
         print("Angalia simu yako na uweke PIN...")
 

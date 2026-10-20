@@ -7,7 +7,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { API } from "./api/client";
 
-const FALLBACK = { name: "Smart Taka", has_logo: false, show_name: true, version: 0 };
+const FALLBACK = { name: "Taka Pay", has_logo: false, show_name: true, version: 0 };
 const CACHE_KEY = "brand";
 const BrandContext = createContext(FALLBACK);
 

@@ -8,5 +8,5 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-start "Smart Taka - Backend (simu)" cmd /k "cd /d %~dp0backend && call .venv\Scripts\activate && uvicorn app.main:app --reload --host 0.0.0.0"
-start "Smart Taka - Frontend (simu)" cmd /k "cd /d %~dp0frontend && npm run dev -- --host"
+start "Taka Pay - Backend (simu)" cmd /k "cd /d %~dp0backend && call .venv\Scripts\activate && uvicorn app.main:app --reload --host 0.0.0.0"
+start "Taka Pay - Frontend (simu)" cmd /k "cd /d %~dp0frontend && npm run dev -- --host"

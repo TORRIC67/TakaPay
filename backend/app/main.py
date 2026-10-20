@@ -1,4 +1,4 @@
-"""Smart Taka backend entry point.
+"""Taka Pay backend entry point.
 Run from the backend/ folder:   uvicorn app.main:app --reload
 Then open http://127.0.0.1:8000/docs
 """

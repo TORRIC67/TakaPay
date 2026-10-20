@@ -1,6 +1,6 @@
 """Payment abstraction layer.
 
-The rest of Smart Taka only talks to `PaymentProvider`. HarakaPay is just one
+The rest of Taka Pay only talks to `PaymentProvider`. HarakaPay is just one
 implementation, so if you change provider later you write one new class and
 nothing else in the system changes.
 """
@@ -26,7 +26,7 @@ class CollectResult:
     order_id: str      # provider's reference - we save it and use it to check status later
     amount: int        # what the customer is charged (TZS)
     fee: int           # provider fee (TZS)
-    net_amount: int    # what Smart Taka receives (TZS)
+    net_amount: int    # what Taka Pay receives (TZS)
 
 
 @dataclass

@@ -17,9 +17,9 @@ services:
         generateValue: true
       # The next two must be the REAL address of your frontend (Render may add letters if the name is taken):
       - key: CORS_ORIGINS
-        value: '["https://smarttaka.onrender.com"]'
+        value: '["https://takapay.onrender.com/"]'
       - key: APP_URL
-        value: https://smarttaka.onrender.com
+        value: https://takapay.onrender.com/
       - key: PAYMENT_PROVIDER
         value: harakapay
       - key: HARAKAPAY_API_KEY
@@ -66,4 +66,4 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://smarttaka-api.onrender.com
+        value: https://takapay-api.onrender.com

@@ -1,0 +1,666 @@
+// src/i18n.js - plain JS translation store (no React needed here), so it can be
+// imported from anywhere, including non-component files like api/client.js.
+// Language choice is kept in localStorage and shared across tabs/reloads.
+
+export const LANGUAGES = { sw: "Kiswahili", en: "English", fr: "Français" };
+const STORAGE_KEY = "stk_lang";
+
+const dict = {
+  // ---- common ----
+  loading: { sw: "Inapakia...", en: "Loading...", fr: "Chargement..." },
+  logout: { sw: "Logout", en: "Log out", fr: "Déconnexion" },
+  save: { sw: "Hifadhi", en: "Save", fr: "Enregistrer" },
+  saving: { sw: "Inahifadhi...", en: "Saving...", fr: "Enregistrement..." },
+  cancel: { sw: "Ghairi", en: "Cancel", fr: "Annuler" },
+  refresh: { sw: "Refresh", en: "Refresh", fr: "Actualiser" },
+  send: { sw: "Tuma", en: "Send", fr: "Envoyer" },
+
+  // ---- errors ----
+  server_unreachable: {
+    sw: "Seva haipatikani. Hakikisha backend (uvicorn) inaendesha.",
+    en: "Can't reach the server. Make sure the backend (uvicorn) is running.",
+    fr: "Serveur injoignable. Vérifiez que le backend (uvicorn) est en cours d'exécution.",
+  },
+
+  // ---- login / register ----
+  phone_label: { sw: "Namba ya simu", en: "Phone number", fr: "Numéro de téléphone" },
+  password_label: { sw: "Password", en: "Password", fr: "Mot de passe" },
+  login_button: { sw: "Ingia", en: "Log in", fr: "Se connecter" },
+  logging_in: { sw: "Inaingia...", en: "Logging in...", fr: "Connexion..." },
+  no_account: { sw: "Huna akaunti?", en: "Don't have an account?", fr: "Vous n'avez pas de compte ?" },
+  register_here: { sw: "Jisajili hapa", en: "Register here", fr: "Inscrivez-vous ici" },
+  back_to_login: { sw: "Rudi kwenye login", en: "Back to login", fr: "Retour à la connexion" },
+
+  register_resident_title: { sw: "Jisajili kama mkazi", en: "Register as a resident", fr: "S'inscrire comme résident" },
+  register_resident_hint: {
+    sw: "Location yako inatumika kuelekeza gari la taka nyumbani kwako.",
+    en: "Your location is used to direct the waste truck to your home.",
+    fr: "Votre position sert à diriger le camion à ordures jusque chez vous.",
+  },
+  register_submit: { sw: "Jisajili", en: "Register", fr: "S'inscrire" },
+  registered_success: {
+    sw: "Umesajiliwa. Sasa unaweza kuingia.",
+    en: "You're registered. You can log in now.",
+    fr: "Inscription réussie. Vous pouvez maintenant vous connecter.",
+  },
+
+  // ---- forms ----
+  use_my_location: { sw: "Tumia location yangu ya sasa", en: "Use my current location", fr: "Utiliser ma position actuelle" },
+  geo_unsupported: {
+    sw: "Browser hii haina location.",
+    en: "This browser doesn't support location.",
+    fr: "Ce navigateur ne prend pas en charge la localisation.",
+  },
+  geo_failed: {
+    sw: "Imeshindwa kupata location. Ruhusu location kwenye browser au uiandike mwenyewe.",
+    en: "Couldn't get your location. Allow location access in the browser, or type it in yourself.",
+    fr: "Impossible d'obtenir la position. Autorisez la localisation ou saisissez-la vous-même.",
+  },
+  saved_generic: { sw: "Imehifadhiwa.", en: "Saved.", fr: "Enregistré." },
+
+  field_full_name: { sw: "Jina kamili", en: "Full name", fr: "Nom complet" },
+  field_customer_name: {
+    sw: "Jina / ID (mtu, kampuni au taasisi)",
+    en: "Name / ID (person, company or institution)",
+    fr: "Nom / ID (personne, entreprise ou institution)",
+  },
+  field_phone: { sw: "Namba ya simu", en: "Phone number", fr: "Numéro de téléphone" },
+  field_password: {
+    sw: "Password (angalau herufi 8)", en: "Password (at least 8 characters)", fr: "Mot de passe (8 caractères min.)",
+  },
+  field_ward: { sw: "Kata / Mtaa (ward)", en: "Ward / neighborhood", fr: "Quartier" },
+  field_address: { sw: "Maelezo ya makazi (hiari)", en: "Address details (optional)", fr: "Détails de l'adresse (facultatif)" },
+  field_latitude: { sw: "Latitude", en: "Latitude", fr: "Latitude" },
+  field_longitude: { sw: "Longitude", en: "Longitude", fr: "Longitude" },
+  field_driver_full_name: {
+    sw: "Jina kamili la dereva / mwenye lori", en: "Driver / truck owner full name", fr: "Nom complet du chauffeur",
+  },
+  field_plate_number: { sw: "Namba ya lori", en: "Truck plate number", fr: "Plaque d'immatriculation du camion" },
+  field_fuel_efficiency: {
+    sw: "Matumizi ya mafuta (km kwa lita)", en: "Fuel efficiency (km per liter)", fr: "Consommation (km par litre)",
+  },
+  field_bin_code: {
+    sw: "Bin code (ID ambayo sensor itatuma)", en: "Bin code (the ID the sensor will send)", fr: "Code du bac (ID envoyé par le capteur)",
+  },
+
+  // ---- resident dashboard ----
+  welcome: { sw: "Karibu, {name}", en: "Welcome, {name}", fr: "Bienvenue, {name}" },
+  no_customer_profile: {
+    sw: "Akaunti hii haina wasifu wa mteja.", en: "This account has no customer profile.", fr: "Ce compte n'a pas de profil client.",
+  },
+  status_registered: { sw: "Umesajiliwa", en: "Registered", fr: "Inscrit" },
+  status_billed: { sw: "Ada ya mwezi inasubiri malipo", en: "Monthly fee awaiting payment", fr: "Facture mensuelle en attente de paiement" },
+  status_paid: { sw: "Umelipa. Gari litakuja kuchukua taka.", en: "Paid. The truck will come collect your waste.", fr: "Payé. Le camion viendra collecter vos ordures." },
+  status_badge_registered: { sw: "registered", en: "registered", fr: "inscrit" },
+  status_badge_billed: { sw: "billed", en: "billed", fr: "facturé" },
+  status_badge_paid: { sw: "paid", en: "paid", fr: "payé" },
+  monthly_fee_label: { sw: "Ada ya mwezi:", en: "Monthly fee:", fr: "Frais mensuels :" },
+  complaint_title: { sw: "Toa maoni au malalamiko", en: "Send feedback or a complaint", fr: "Envoyer un avis ou une plainte" },
+  service_rating_label: { sw: "Kiwango cha huduma", en: "Service rating", fr: "Note du service" },
+  message_label: { sw: "Ujumbe", en: "Message", fr: "Message" },
+  complaint_thanks: {
+    sw: "Asante, maoni yako yamepokelewa.", en: "Thank you, your feedback has been received.", fr: "Merci, votre avis a bien été reçu.",
+  },
+
+  // ---- driver ----
+  todays_route: { sw: "Route ya leo", en: "Today's route", fr: "Itinéraire du jour" },
+  no_route_today: {
+    sw: "Bado hujapewa route ya leo. Admin atatengeneza route baada ya wateja kulipa na bins kujaa.",
+    en: "You don't have a route for today yet. The admin will generate one once customers pay and bins fill up.",
+    fr: "Vous n'avez pas encore d'itinéraire aujourd'hui. L'administrateur en générera un une fois les clients payés et les bacs pleins.",
+  },
+
+  // ---- admin tabs ----
+  tab_overview: { sw: "Overview", en: "Overview", fr: "Aperçu" },
+  tab_residents: { sw: "Residents", en: "Residents", fr: "Résidents" },
+  tab_register: { sw: "Register", en: "Register", fr: "Inscription" },
+  tab_routes: { sw: "Routes (AI)", en: "Routes (AI)", fr: "Itinéraires (IA)" },
+  tab_complaints: { sw: "Complaints", en: "Complaints", fr: "Plaintes" },
+  tab_bins: { sw: "Bins", en: "Bins", fr: "Bacs" },
+  tab_fleet: { sw: "Madereva/Malori", en: "Drivers & trucks", fr: "Chauffeurs et camions" },
+  tab_admins: { sw: "Maadmin", en: "Admins", fr: "Administrateurs" },
+  tab_providers: { sw: "Kanda (Providers)", en: "Zones (Providers)", fr: "Zones (Prestataires)" },
+  tab_reports: { sw: "Ripoti", en: "Reports", fr: "Rapports" },
+  tab_agents: { sw: "Mawakala", en: "Field agents", fr: "Agents de terrain" },
+
+  // ---- overview ----
+  live_map_title: { sw: "Ramani ya ukusanyaji (moja kwa moja)", en: "Live collection map", fr: "Carte de collecte en direct" },
+  stat_residents: { sw: "Residents (waliolipa / jumla)", en: "Residents (paid / total)", fr: "Résidents (payé / total)" },
+  stat_coverage: { sw: "Coverage", en: "Coverage", fr: "Couverture" },
+  stat_revenue: { sw: "Mapato ya mwezi huu", en: "Revenue collected (this month)", fr: "Revenus collectés (ce mois-ci)" },
+  stat_trucks: { sw: "Malori yanayofanya kazi", en: "Trucks in operation", fr: "Camions en service" },
+  stat_cost_household: { sw: "Gharama / nyumba (leo)", en: "Cost / household (today)", fr: "Coût / foyer (aujourd'hui)" },
+  stat_complaints: { sw: "Malalamiko yaliyopokelewa", en: "Complaints logged", fr: "Plaintes enregistrées" },
+  legend_depot: { sw: "Depot", en: "Depot", fr: "Dépôt" },
+  legend_registered: { sw: "Amesajiliwa (hajatumiwa bili)", en: "Registered (not billed yet)", fr: "Inscrit (pas encore facturé)" },
+  legend_billed: { sw: "Ametumiwa bili", en: "Billed", fr: "Facturé" },
+  legend_paid: { sw: "Amelipa", en: "Paid", fr: "Payé" },
+  legend_full_bin: { sw: "Bin imejaa", en: "Full bin", fr: "Bac plein" },
+
+  // ---- residents table ----
+  search_placeholder: { sw: "Tafuta jina, simu au ward", en: "Search name, phone or ward", fr: "Rechercher nom, téléphone ou quartier" },
+  status_all: { sw: "Status zote", en: "All statuses", fr: "Tous les statuts" },
+  send_billing_all: { sw: "Tuma SMS ya bili kwa wote wasiolipa", en: "Send billing SMS to all unpaid", fr: "Envoyer le SMS de facturation aux impayés" },
+  sending_ellipsis: { sw: "Inatuma...", en: "Sending...", fr: "Envoi en cours..." },
+  show_removed: { sw: "Onyesha waliotolewa", en: "Show removed", fr: "Afficher les retirés" },
+  confirm_remove: {
+    sw: "Una uhakika unataka kumtoa {name} kwenye mfumo?",
+    en: "Are you sure you want to remove {name} from the system?",
+    fr: "Voulez-vous vraiment retirer {name} du système ?",
+  },
+  removed_notice: { sw: "{name} ametolewa kwenye mfumo.", en: "{name} has been removed from the system.", fr: "{name} a été retiré du système." },
+  reactivated_notice: { sw: "{name} amerejeshwa kwenye mfumo.", en: "{name} has been restored to the system.", fr: "{name} a été rétabli dans le système." },
+  th_name: { sw: "Jina", en: "Name", fr: "Nom" },
+  th_phone: { sw: "Simu", en: "Phone", fr: "Téléphone" },
+  th_ward: { sw: "Ward", en: "Ward", fr: "Quartier" },
+  th_status: { sw: "Status", en: "Status", fr: "Statut" },
+  th_actions: { sw: "Vitendo", en: "Actions", fr: "Actions" },
+  removed_badge: { sw: "ametolewa", en: "removed", fr: "retiré" },
+  reactivate_btn: { sw: "Mrejeshe", en: "Restore", fr: "Rétablir" },
+  send_billing_one: { sw: "Tuma SMS ya bili", en: "Send billing SMS", fr: "Envoyer le SMS de facturation" },
+  edit_btn: { sw: "Hariri", en: "Edit", fr: "Modifier" },
+  remove_btn: { sw: "Toa", en: "Remove", fr: "Retirer" },
+  no_customers: { sw: "Hakuna wateja.", en: "No customers.", fr: "Aucun client." },
+  billing_sent_count: { sw: "SMS zimetumwa: {n}", en: "SMS sent: {n}", fr: "SMS envoyés : {n}" },
+  billing_failed_count: { sw: "zimeshindwa: {n}", en: "failed: {n}", fr: "échecs : {n}" },
+  billing_already_sent: { sw: "tayari zilitumwa mwezi huu: {n}", en: "already sent this month: {n}", fr: "déjà envoyés ce mois-ci : {n}" },
+  billing_skipped_paid: { sw: "wamelipa tayari: {n}", en: "already paid: {n}", fr: "déjà payé : {n}" },
+  billing_error_prefix: { sw: "Kosa: {err}", en: "Error: {err}", fr: "Erreur : {err}" },
+  billing_mock_note: {
+    sw: "(Mock: SMS zinaonekana kwenye terminal ya seva, hazijatumwa kweli.)",
+    en: "(Mock: SMS appear in the server terminal, they aren't really sent.)",
+    fr: "(Simulation : les SMS s'affichent dans le terminal du serveur, ils ne sont pas réellement envoyés.)",
+  },
+
+  // ---- register (admin) ----
+  register_customer_title: { sw: "Sajili mteja", en: "Register customer", fr: "Inscrire un client" },
+  register_customer_submit: { sw: "Sajili mteja", en: "Register customer", fr: "Inscrire le client" },
+  register_customer_success: { sw: "Mteja amesajiliwa (ID {id}).", en: "Customer registered (ID {id}).", fr: "Client inscrit (ID {id})." },
+  register_driver_title: { sw: "Sajili dereva / mwenye lori", en: "Register driver / truck owner", fr: "Inscrire un chauffeur / propriétaire de camion" },
+  register_driver_hint: {
+    sw: "Inatengeneza login ya dereva na lori lake kwa pamoja.",
+    en: "Creates the driver's login and their truck together.",
+    fr: "Crée en même temps le compte du chauffeur et son camion.",
+  },
+  register_driver_submit: { sw: "Sajili dereva na lori", en: "Register driver and truck", fr: "Inscrire le chauffeur et le camion" },
+  register_driver_success: { sw: "Dereva amesajiliwa na lori {plate}.", en: "Driver registered with truck {plate}.", fr: "Chauffeur inscrit avec le camion {plate}." },
+  register_bin_title: { sw: "Sajili bin", en: "Register bin", fr: "Inscrire un bac" },
+  register_bin_hint: {
+    sw: "Bin code ndiyo ID ambayo sensor itatuma kwenye /sensors/readings.",
+    en: "The bin code is the ID the sensor will send to /sensors/readings.",
+    fr: "Le code du bac est l'identifiant que le capteur enverra à /sensors/readings.",
+  },
+  register_bin_submit: { sw: "Sajili bin", en: "Register bin", fr: "Inscrire le bac" },
+  register_bin_success: { sw: "Bin {code} imesajiliwa.", en: "Bin {code} registered.", fr: "Bac {code} inscrit." },
+
+  // ---- routes (admin) ----
+  generate_routes_btn: { sw: "Tengeneza routes (AI)", en: "Generate routes (AI)", fr: "Générer les itinéraires (IA)" },
+  calculating: { sw: "Inahesabu...", en: "Calculating...", fr: "Calcul en cours..." },
+  source_osrm: { sw: "Umbali na muda vimetoka OSRM (ramani za barabara halisi).", en: "Distance and time came from OSRM (real road routing).", fr: "La distance et la durée proviennent d'OSRM (itinéraire routier réel)." },
+  source_estimate: {
+    sw: "Umbali ni makadirio ya mstari-wa-moja, si OSRM: {source}",
+    en: "Distance is a straight-line estimate, not OSRM: {source}",
+    fr: "La distance est une estimation à vol d'oiseau, pas OSRM : {source}",
+  },
+  no_routes_today: {
+    sw: "Hakuna route kwa siku hii. Bonyeza Generate baada ya wateja kulipa au bin kujaa.",
+    en: "No route for this day yet. Click Generate once customers have paid or a bin is full.",
+    fr: "Aucun itinéraire pour ce jour. Cliquez sur Générer une fois des clients payés ou un bac plein.",
+  },
+
+  // ---- route view (shared by driver + admin) ----
+  truck_label: { sw: "Lori {plate}", en: "Truck {plate}", fr: "Camion {plate}" },
+  driver_label: { sw: "Dereva:", en: "Driver:", fr: "Chauffeur :" },
+  stops_label: { sw: "Vituo:", en: "Stops:", fr: "Arrêts :" },
+  distance_label: { sw: "Umbali", en: "Distance", fr: "Distance" },
+  est_time_label: { sw: "Muda unaokadiriwa", en: "Estimated time", fr: "Durée estimée" },
+  fuel_label: { sw: "Mafuta", en: "Fuel", fr: "Carburant" },
+  trip_cost_label: { sw: "Gharama ya safari", en: "Trip cost", fr: "Coût du trajet" },
+  legend_household_paid: { sw: "Nyumba (imelipa)", en: "Household (paid)", fr: "Foyer (payé)" },
+  legend_bin_full_route: { sw: "Bin imejaa", en: "Full bin", fr: "Bac plein" },
+  legend_completed: { sw: "Imekamilika", en: "Completed", fr: "Terminé" },
+  bin_label: { sw: "Bin", en: "Bin", fr: "Bac" },
+  household_label: { sw: "Nyumba", en: "Household", fr: "Foyer" },
+  filled_percent: { sw: "{pct}% imejaa", en: "{pct}% full", fr: "{pct}% plein" },
+  completed_status: { sw: "Imekamilika", en: "Completed", fr: "Terminé" },
+  map_link: { sw: "Ramani", en: "Map", fr: "Carte" },
+
+  // ---- complaints (admin) ----
+  th_date: { sw: "Tarehe", en: "Date", fr: "Date" },
+  th_customer: { sw: "Mteja", en: "Customer", fr: "Client" },
+  th_rating: { sw: "Kiwango", en: "Rating", fr: "Note" },
+  th_message: { sw: "Ujumbe", en: "Message", fr: "Message" },
+  no_complaints: { sw: "Hakuna malalamiko bado.", en: "No complaints yet.", fr: "Aucune plainte pour le moment." },
+
+  // ---- payment button ----
+  pay_button: { sw: "Lipa", en: "Make payment", fr: "Payer" },
+  pay_sending: { sw: "Inatuma ombi...", en: "Sending request...", fr: "Envoi de la demande..." },
+  pay_waiting: {
+    sw: "Angalia simu yako, weka PIN kukamilisha malipo",
+    en: "Check your phone, enter your PIN to complete payment",
+    fr: "Vérifiez votre téléphone, entrez votre code PIN pour finaliser le paiement",
+  },
+  pay_paid: { sw: "Amelipa", en: "Paid", fr: "Payé" },
+  pay_failed: { sw: "Malipo hayakukamilika. Jaribu tena.", en: "Payment didn't go through. Try again.", fr: "Le paiement a échoué. Réessayez." },
+  pay_review: {
+    sw: "Kiasi kilicholipwa hakilingani. Admin ahakiki malipo haya.",
+    en: "The amount paid doesn't match. An admin will review this payment.",
+    fr: "Le montant payé ne correspond pas. Un administrateur va vérifier ce paiement.",
+  },
+  pay_timeout: { sw: "Bado hatujapata jibu la malipo.", en: "We haven't heard back about this payment yet.", fr: "Nous n'avons pas encore de réponse pour ce paiement." },
+  pay_retry: { sw: "Jaribu tena", en: "Try again", fr: "Réessayer" },
+  pay_recheck: { sw: "Angalia tena", en: "Check again", fr: "Vérifier à nouveau" },
+
+  // ---- admin: bins management ----
+  bins_registered_label: { sw: "Bins zilizosajiliwa", en: "Registered bins", fr: "Bacs inscrits" },
+  th_code: { sw: "Code", en: "Code", fr: "Code" },
+  th_location: { sw: "Mahali", en: "Location", fr: "Emplacement" },
+  th_fill: { sw: "Kujaa", en: "Fill level", fr: "Remplissage" },
+  bin_status_full: { sw: "imejaa", en: "full", fr: "plein" },
+  bin_status_ok: { sw: "sawa", en: "ok", fr: "ok" },
+  open_map: { sw: "Ramani", en: "Map", fr: "Carte" },
+  no_bins: { sw: "Hakuna bin zilizosajiliwa.", en: "No bins registered.", fr: "Aucun bac inscrit." },
+  bin_edit_hint: {
+    sw: "Code ya bin haibadilishwi kwa sababu sensor inaitumia. Unaweza kubadilisha mahali ilipo tu.",
+    en: "A bin's code can't be changed because its sensor uses it. You can change where it is.",
+    fr: "Le code d'un bac ne peut pas être modifié car son capteur l'utilise. Vous pouvez changer son emplacement.",
+  },
+  confirm_remove_bin: {
+    sw: "Kuondoa bin {code} (mfano imeondolewa mahali pake)? Haitaonekana tena kwenye ramani wala routes.",
+    en: "Remove bin {code} (e.g. it was taken away)? It will no longer appear on the map or in routes.",
+    fr: "Retirer le bac {code} (par ex. enlevé) ? Il n'apparaîtra plus sur la carte ni dans les itinéraires.",
+  },
+  bin_removed_notice: { sw: "Bin {code} imeondolewa.", en: "Bin {code} was removed.", fr: "Le bac {code} a été retiré." },
+  bin_restored_notice: { sw: "Bin {code} imerejeshwa.", en: "Bin {code} was restored.", fr: "Le bac {code} a été rétabli." },
+  bin_saved_notice: { sw: "Bin {code} imehifadhiwa.", en: "Bin {code} updated.", fr: "Bac {code} mis à jour." },
+
+  // ---- admin: drivers & trucks ----
+  fleet_active_label: { sw: "Madereva/malori yanayofanya kazi", en: "Active drivers/trucks", fr: "Chauffeurs/camions actifs" },
+  fleet_register_hint: {
+    sw: "Kusajili dereva/lori mpya, tumia kichupo cha Register.",
+    en: "To add a new driver/truck, use the Register tab.",
+    fr: "Pour ajouter un chauffeur/camion, utilisez l'onglet Inscription.",
+  },
+  th_driver: { sw: "Dereva", en: "Driver", fr: "Chauffeur" },
+  th_truck: { sw: "Lori", en: "Truck", fr: "Camion" },
+  th_fuel: { sw: "Km kwa lita", en: "Km per litre", fr: "Km par litre" },
+  no_drivers: { sw: "Hakuna dereva aliyesajiliwa.", en: "No drivers registered.", fr: "Aucun chauffeur inscrit." },
+  confirm_remove_driver: {
+    sw: "Kumtoa {name} kunafunga akaunti yake na lori {plate} halitatumika kwenye routes. Endelea?",
+    en: "Removing {name} disables their login, and truck {plate} will no longer be used for routes. Continue?",
+    fr: "Retirer {name} désactive son compte et le camion {plate} ne sera plus utilisé. Continuer ?",
+  },
+  driver_removed_notice: {
+    sw: "Dereva {name} ameondolewa. Tengeneza routes upya.",
+    en: "Driver {name} was removed. Regenerate the routes.",
+    fr: "Le chauffeur {name} a été retiré. Régénérez les itinéraires.",
+  },
+
+  // ---- admin: managing other admins (super admin only) ----
+  admins_add_title: { sw: "Ongeza admin mpya", en: "Add a new admin", fr: "Ajouter un administrateur" },
+  admins_add_hint: {
+    sw: "Admin mpya anaweza kufanya kila kitu isipokuwa kuongeza au kuondoa admin wengine. Ni wewe tu (Super Admin) unayeweza kufanya hivyo.",
+    en: "A new admin can do everything except add or remove other admins. Only you (the Super Admin) can do that.",
+    fr: "Un nouvel administrateur peut tout faire sauf ajouter ou retirer d'autres administrateurs. Seul vous (Super Admin) le pouvez.",
+  },
+  admins_add_submit: { sw: "Ongeza admin", en: "Add admin", fr: "Ajouter l'administrateur" },
+  admins_add_success: { sw: "Admin {name} ameongezwa.", en: "Admin {name} added.", fr: "Administrateur {name} ajouté." },
+  th_role: { sw: "Cheo", en: "Role", fr: "Rôle" },
+  role_super_admin: { sw: "Super Admin", en: "Super Admin", fr: "Super Admin" },
+  role_admin: { sw: "Admin", en: "Admin", fr: "Admin" },
+  confirm_remove_admin: {
+    sw: "Kumtoa {name} kunamzuia kuingia kwenye mfumo mara moja. Endelea?",
+    en: "Removing {name} locks them out of the system immediately. Continue?",
+    fr: "Retirer {name} le bloque immédiatement. Continuer ?",
+  },
+  admin_removed_notice: { sw: "{name} ametolewa uadmin.", en: "{name} is no longer an admin.", fr: "{name} n'est plus administrateur." },
+  admin_restored_notice: { sw: "{name} amerudishwa uadmin.", en: "{name} is an admin again.", fr: "{name} est de nouveau administrateur." },
+
+  // ---- admin: marking routes complete ----
+  complete_route_btn: { sw: "Kamilisha route yote", en: "Mark whole route complete", fr: "Terminer tout l'itinéraire" },
+  confirm_complete_route: {
+    sw: "Hii itaweka vituo vyote vilivyobaki kama vimekusanywa na kufunga route hii. Endelea?",
+    en: "This marks every remaining stop as collected and closes the route. Continue?",
+    fr: "Cela marque tous les arrêts restants comme collectés et clôture l'itinéraire. Continuer ?",
+  },
+
+  // ---- admin: service providers (zones) ----
+  providers_add_title: { sw: "Ongeza kanda mpya", en: "Add a new zone", fr: "Ajouter une nouvelle zone" },
+  providers_add_hint: {
+    sw: "Kila kanda ina kituo (depot) chake, bei yake ya mafuta, malori na wateja wake wenyewe. Baada ya kuunda kanda, ongeza admin wake wa kwanza kwenye tab ya Admins.",
+    en: "Each zone has its own depot, fuel price, trucks and customers. After creating a zone, add its first admin from the Admins tab.",
+    fr: "Chaque zone a son propre dépôt, prix du carburant, camions et clients. Après avoir créé une zone, ajoutez son premier administrateur dans l'onglet Admins.",
+  },
+  providers_add_submit: { sw: "Ongeza kanda", en: "Add zone", fr: "Ajouter la zone" },
+  providers_add_success: { sw: "Kanda {name} imeongezwa.", en: "Zone {name} added.", fr: "Zone {name} ajoutée." },
+  field_zone_name: { sw: "Jina la kanda (mfano: Dar es Salaam)", en: "Zone name (e.g. Dar es Salaam)", fr: "Nom de la zone (ex. Dar es Salaam)" },
+  field_fuel_price: { sw: "Bei ya mafuta (TZS kwa lita)", en: "Fuel price (TZS per litre)", fr: "Prix du carburant (TZS par litre)" },
+  field_zone: { sw: "Kanda", en: "Zone", fr: "Zone" },
+  field_zone_placeholder: { sw: "-- chagua kanda --", en: "-- choose a zone --", fr: "-- choisir une zone --" },
+  th_zone: { sw: "Kanda", en: "Zone", fr: "Zone" },
+  th_customers: { sw: "Wateja", en: "Customers", fr: "Clients" },
+  th_bins: { sw: "Bins", en: "Bins", fr: "Bacs" },
+  th_trucks: { sw: "Malori", en: "Trucks", fr: "Camions" },
+  th_revenue_this_month: { sw: "Mapato mwezi huu", en: "Revenue this month", fr: "Recettes ce mois-ci" },
+  th_fuel_price: { sw: "Bei ya mafuta", en: "Fuel price", fr: "Prix du carburant" },
+  no_providers: { sw: "Hakuna kanda bado.", en: "No zones yet.", fr: "Aucune zone pour le moment." },
+
+  // ---- admin: reports ----
+  granularity_month: { sw: "Kila mwezi", en: "Monthly", fr: "Mensuel" },
+  granularity_quarter: { sw: "Robo mwaka", en: "Quarterly", fr: "Trimestriel" },
+  granularity_year: { sw: "Kila mwaka", en: "Annually", fr: "Annuel" },
+  reports_my_zone_title: { sw: "Makusanyo ya kanda yako", en: "Your zone's collections", fr: "Recettes de votre zone" },
+  reports_all_zones_title: { sw: "Makusanyo ya kanda zote", en: "Collections across all zones", fr: "Recettes de toutes les zones" },
+  no_report_data: { sw: "Bado hakuna malipo ya kuonyesha.", en: "No payments to show yet.", fr: "Aucun paiement à afficher pour le moment." },
+  payments_count_label: { sw: "malipo {n}", en: "{n} payments", fr: "{n} paiements" },
+  th_total_collected: { sw: "Jumla iliyokusanywa", en: "Total collected", fr: "Total collecté" },
+
+  // ---- resident: payment history / receipts ----
+  payment_history_title: { sw: "Historia ya malipo yangu", en: "My payment history", fr: "Mon historique de paiement" },
+  no_payments_yet: { sw: "Bado hujalipa.", en: "No payments yet.", fr: "Aucun paiement pour le moment." },
+  th_period: { sw: "Mwezi", en: "Period", fr: "Période" },
+  th_amount: { sw: "Kiasi", en: "Amount", fr: "Montant" },
+  download_receipt_btn: { sw: "Pakua risiti", en: "Download receipt", fr: "Télécharger le reçu" },
+
+  // ---- password self-service ----
+  change_password_link: { sw: "Badilisha password", en: "Change password", fr: "Changer le mot de passe" },
+  change_password_title: { sw: "Badilisha password yako", en: "Change your password", fr: "Changer votre mot de passe" },
+  current_password_label: { sw: "Password ya sasa", en: "Current password", fr: "Mot de passe actuel" },
+  new_password_label: { sw: "Password mpya", en: "New password", fr: "Nouveau mot de passe" },
+  confirm_password_label: { sw: "Rudia password mpya", en: "Confirm new password", fr: "Confirmez le nouveau mot de passe" },
+  change_password_submit: { sw: "Badilisha password", en: "Change password", fr: "Changer le mot de passe" },
+  passwords_dont_match: { sw: "Password mpya hazifanani.", en: "The new passwords don't match.", fr: "Les nouveaux mots de passe ne correspondent pas." },
+  password_changed_success: { sw: "Password imebadilishwa.", en: "Password changed.", fr: "Mot de passe changé." },
+  back_to_dashboard: { sw: "Rudi kwenye dashibodi", en: "Back to dashboard", fr: "Retour au tableau de bord" },
+
+  forgot_password_link: { sw: "Umesahau password?", en: "Forgot password?", fr: "Mot de passe oublié ?" },
+  forgot_password_title: { sw: "Umesahau password", en: "Forgot password", fr: "Mot de passe oublié" },
+  forgot_password_hint: {
+    sw: "Weka namba ya simu uliyosajili. Tutakutumia msimbo wa siri (SMS) wa kubadili password.",
+    en: "Enter the phone number you registered with. We'll text you a code to reset your password.",
+    fr: "Entrez le numéro avec lequel vous êtes inscrit. Nous vous enverrons un code par SMS.",
+  },
+  send_code_btn: { sw: "Tuma msimbo", en: "Send code", fr: "Envoyer le code" },
+  otp_sent_notice: { sw: "Msimbo umetumwa kwa SMS. Angalia simu yako.", en: "A code has been texted to you. Check your phone.", fr: "Un code vous a été envoyé par SMS. Vérifiez votre téléphone." },
+  otp_code_label: { sw: "Msimbo (herufi 6)", en: "Code (6 digits)", fr: "Code (6 chiffres)" },
+  reset_password_submit: { sw: "Weka password mpya", en: "Reset password", fr: "Réinitialiser le mot de passe" },
+  password_reset_success: { sw: "Password imebadilishwa. Sasa unaweza kuingia.", en: "Password reset. You can log in now.", fr: "Mot de passe réinitialisé. Vous pouvez maintenant vous connecter." },
+
+  // ---- fuel price ----
+  fuel_price_card_title: { sw: "Bei ya mafuta ya kanda yako", en: "Your zone's fuel price", fr: "Prix du carburant de votre zone" },
+  fuel_price_updated: { sw: "Bei ya mafuta imesasishwa.", en: "Fuel price updated.", fr: "Prix du carburant mis à jour." },
+  liter_short: { sw: "lita", en: "litre", fr: "litre" },
+
+  // ---- v4: reports/pdf, webhook logs, wallet, phone-override ----
+  download_pdf_btn: { sw: "Pakua PDF", en: "Download PDF", fr: "Télécharger le PDF" },
+  download_statement_btn: { sw: "Pakua taarifa", en: "Download statement", fr: "Télécharger le relevé" },
+  webhook_logs_title: { sw: "Mapokezi ya Payment Provider (webhook)", en: "Payment provider webhook logs", fr: "Journaux webhook du fournisseur de paiement" },
+  show_btn: { sw: "Onyesha", en: "Show", fr: "Afficher" },
+  th_time: { sw: "Muda", en: "Time", fr: "Heure" },
+  th_order_id: { sw: "Order ID", en: "Order ID", fr: "Order ID" },
+  th_error: { sw: "Hitilafu", en: "Error", fr: "Erreur" },
+  webhook_processed: { sw: "imechakatwa", en: "processed", fr: "traité" },
+  webhook_not_processed: { sw: "haijachakatwa", en: "not processed", fr: "non traité" },
+  no_webhook_logs: { sw: "Hakuna mapokezi bado.", en: "No webhook calls yet.", fr: "Aucun appel webhook pour le moment." },
+
+  pay_different_phone_link: { sw: "Lipa kwa namba nyingine?", en: "Pay from a different phone?", fr: "Payer depuis un autre numéro ?" },
+
+  wallet_title: { sw: "Wallet yangu", en: "My wallet", fr: "Mon portefeuille" },
+  wallet_balance_label: { sw: "salio la sasa", en: "current balance", fr: "solde actuel" },
+  topup_amount_placeholder: { sw: "Kiasi (TZS)", en: "Amount (TZS)", fr: "Montant (TZS)" },
+  topup_submit_btn: { sw: "Ongeza kwenye wallet", en: "Add to wallet", fr: "Ajouter au portefeuille" },
+  pay_from_wallet_btn: { sw: "Lipa kutoka wallet", en: "Pay from wallet", fr: "Payer depuis le portefeuille" },
+  paid_from_wallet_success: { sw: "Imelipwa kwa mafanikio kutoka wallet.", en: "Paid successfully from your wallet.", fr: "Payé avec succès depuis votre portefeuille." },
+  wallet_topup_label: { sw: "Kuongeza kwenye wallet", en: "Wallet top-up", fr: "Recharge du portefeuille" },
+  sidebar_tagline: { sw: "   ", en: "Clean ", fr: "   " },
+
+
+  // ---- field agents ----
+  agent_dashboard_title: { sw: "Dashibodi ya Wakala", en: "Field Agent Dashboard", fr: "Tableau de bord de l'agent" },
+  agent_wards_label: { sw: "Mitaa yako", en: "Your streets", fr: "Vos rues" },
+  agent_hint: {
+    sw: "Unaweza kuona na kusajili wateja wa mitaa yako tu. Kama kuna kitu cha kubadilisha kwa mteja aliyeshasajiliwa, wasiliana na admin wako.",
+    en: "You can only view and register customers in your assigned streets. To change anything about an existing customer, contact your admin.",
+    fr: "Vous ne pouvez voir et inscrire que les clients de vos rues assignées. Pour modifier un client existant, contactez votre administrateur.",
+  },
+  agent_register_title: { sw: "Sajili mteja mpya", en: "Register a new customer", fr: "Inscrire un nouveau client" },
+  agent_register_submit: { sw: "Sajili", en: "Register", fr: "Inscrire" },
+  agent_register_success: { sw: "{name} amesajiliwa.", en: "{name} registered.", fr: "{name} inscrit." },
+  agent_no_customers: { sw: "Hakuna wateja bado kwenye mitaa yako.", en: "No customers yet in your streets.", fr: "Aucun client pour le moment dans vos rues." },
+
+  agents_add_title: { sw: "Ongeza wakala wa mtaa", en: "Add a field agent", fr: "Ajouter un agent de terrain" },
+  agents_add_hint: {
+    sw: "Wakala anaweza kuona na kusajili wateja wa mitaa aliyopewa tu. Hawezi kuhariri wala kufuta chochote.",
+    en: "An agent can only view and register customers in the streets you assign them. They cannot edit or delete anything.",
+    fr: "Un agent ne peut voir et inscrire que les clients des rues qui lui sont assignées. Il ne peut rien modifier ni supprimer.",
+  },
+  agents_add_submit: { sw: "Ongeza wakala", en: "Add agent", fr: "Ajouter l'agent" },
+  agent_added_success: { sw: "Wakala {name} ameongezwa.", en: "Agent {name} added.", fr: "Agent {name} ajouté." },
+  agent_wards_field_label: { sw: "Mitaa (tenganisha kwa koma)", en: "Streets (comma-separated)", fr: "Rues (séparées par des virgules)" },
+  agent_wards_column: { sw: "Mitaa", en: "Streets", fr: "Rues" },
+  agent_wards_edit_hint: { sw: "Badilisha orodha ya mitaa, tenganisha kwa koma.", en: "Edit the list of streets, comma-separated.", fr: "Modifiez la liste des rues, séparées par des virgules." },
+  agent_no_agents: { sw: "Hakuna wakala bado.", en: "No field agents yet.", fr: "Aucun agent de terrain pour le moment." },
+  confirm_remove_agent: { sw: "Kumtoa {name}? Hataweza kuingia tena mpaka umrejeshe.", en: "Remove {name}? They won't be able to log in until restored.", fr: "Retirer {name} ? Il ne pourra plus se connecter tant qu'il ne sera pas rétabli." },
+  agent_removed_notice: { sw: "Wakala {name} ameondolewa.", en: "Agent {name} removed.", fr: "Agent {name} retiré." },
+  agent_restored_notice: { sw: "Wakala {name} amerejeshwa.", en: "Agent {name} restored.", fr: "Agent {name} rétabli." },
+
+  // ---- institutions / custom fee ----
+  register_customer_hint: {
+    sw: "Acha 'Bei maalum' wazi kwa mteja wa kawaida (atalipa bei ya kawaida ya kanda). Jaza kiasi kwa taasisi/jengo kubwa linalolipa tofauti.",
+    en: "Leave 'Custom fee' blank for an ordinary resident (they pay the zone's standard fee). Fill it in for an institution/large building that pays a different amount.",
+    fr: "Laissez 'Tarif personnalisé' vide pour un résident ordinaire (tarif standard de la zone). Remplissez-le pour une institution qui paie un montant différent.",
+  },
+  field_customer_category: { sw: "Aina ya mteja", en: "Customer type", fr: "Type de client" },
+  category_residential: { sw: "Makazi (ya kawaida)", en: "Residential", fr: "Résidentiel" },
+  category_institution: { sw: "Taasisi / Jengo kubwa", en: "Institution", fr: "Institution" },
+  field_custom_fee: { sw: "Bei maalum ya mwezi (TZS) - hiari", en: "Custom monthly fee (TZS) - optional", fr: "Tarif mensuel personnalisé (TZS) - facultatif" },
+  field_custom_fee_placeholder: { sw: "Acha wazi = bei ya kawaida ya kanda", en: "Leave blank = zone's standard fee", fr: "Laisser vide = tarif standard de la zone" },
+  th_fee: { sw: "Ada", en: "Fee", fr: "Tarif" },
+
+  // ---- OTP phone verification, QR / bank payments, bank receipts ----
+  otp_title: { sw: "Thibitisha namba ya simu", en: "Verify phone number", fr: "Vérifier le numéro de téléphone" },
+  otp_sent_to: { sw: "Msimbo wa tarakimu 6 umetumwa kwa SMS kwenda {phone}. Mwombe mteja msimbo huo na uuweke hapa ili usajili ukamilike.", en: "A 6-digit code was texted to {phone}. Ask the customer for it and enter it here to complete the registration.", fr: "Un code à 6 chiffres a été envoyé par SMS au {phone}. Demandez-le au client et saisissez-le ici pour terminer l'inscription." },
+  otp_not_sent: { sw: "Msimbo haukutumwa. Bonyeza 'Tuma tena'.", en: "The code was not sent. Press 'Resend'.", fr: "Le code n'a pas été envoyé. Appuyez sur 'Renvoyer'." },
+  otp_signup_code_label: { sw: "Msimbo wa OTP (tarakimu 6)", en: "OTP code (6 digits)", fr: "Code OTP (6 chiffres)" },
+  otp_verify_btn: { sw: "Thibitisha", en: "Verify", fr: "Vérifier" },
+  otp_resend_btn: { sw: "Tuma tena", en: "Resend", fr: "Renvoyer" },
+  otp_resend_in: { sw: "Tuma tena baada ya {s}s", en: "Resend in {s}s", fr: "Renvoyer dans {s}s" },
+  otp_resent: { sw: "Msimbo mpya umetumwa.", en: "A new code was sent.", fr: "Un nouveau code a été envoyé." },
+  registered_verified_success: { sw: "Umethibitishwa na kusajiliwa. Sasa unaweza kuingia.", en: "Verified and registered. You can now log in.", fr: "Vérifié et inscrit. Vous pouvez maintenant vous connecter." },
+  register_customer_verified_success: { sw: "Mteja amethibitishwa na kusajiliwa (ID {id}).", en: "Customer verified and registered (ID {id}).", fr: "Client vérifié et inscrit (ID {id})." },
+  badge_unverified: { sw: "Haijathibitishwa", en: "Not verified", fr: "Non vérifié" },
+  login_unverified_hint: { sw: "Namba yako bado haijathibitishwa. Weka msimbo wa OTP uliotumwa kwa SMS ili kuendelea.", en: "Your number is not verified yet. Enter the OTP code sent by SMS to continue.", fr: "Votre numéro n'est pas encore vérifié. Saisissez le code OTP reçu par SMS pour continuer." },
+  pay_method_push: { sw: "Simu (Push)", en: "Phone (push)", fr: "Téléphone (push)" },
+  pay_method_qr: { sw: "QR Code", en: "QR code", fr: "Code QR" },
+  pay_method_bank: { sw: "Benki", en: "Bank", fr: "Banque" },
+  pay_push_hint: { sw: "Ombi la malipo litatumwa kwenye namba {phone}.", en: "The payment request will be sent to {phone}.", fr: "La demande de paiement sera envoyée au {phone}." },
+  qr_title: { sw: "Lipa kwa QR Code", en: "Pay with a QR code", fr: "Payer avec un code QR" },
+  qr_hint: { sw: "Tengeneza QR kisha uichanganue kwa simu au app ya benki ili ulipe TZS {amount}.", en: "Generate a QR, then scan it with your phone or bank app to pay TZS {amount}.", fr: "Générez un QR puis scannez-le avec votre téléphone ou application bancaire pour payer TZS {amount}." },
+  qr_generate_btn: { sw: "Tengeneza QR", en: "Generate QR", fr: "Générer le QR" },
+  qr_regenerate_btn: { sw: "Tengeneza QR upya", en: "Generate a new QR", fr: "Générer un nouveau QR" },
+  qr_scan_hint: { sw: "changanua kwa simu au app ya benki", en: "scan with your phone or bank app", fr: "scannez avec votre téléphone ou application bancaire" },
+  qr_waiting: { sw: "Tunasubiri malipo yako...", en: "Waiting for your payment...", fr: "En attente de votre paiement..." },
+  bank_title: { sw: "Lipa kwa akaunti ya benki", en: "Pay into the bank account", fr: "Payer sur le compte bancaire" },
+  bank_name_label: { sw: "Benki", en: "Bank", fr: "Banque" },
+  bank_account_name_label: { sw: "Jina la akaunti", en: "Account name", fr: "Nom du compte" },
+  bank_account_number_label: { sw: "Namba ya akaunti", en: "Account number", fr: "Numéro de compte" },
+  bank_copy_btn: { sw: "Nakili", en: "Copy", fr: "Copier" },
+  bank_copied: { sw: "Imenakiliwa", en: "Copied", fr: "Copié" },
+  bank_amount_hint: { sw: "Ada ya mwezi: TZS {amount}.", en: "Monthly fee: TZS {amount}.", fr: "Tarif mensuel : TZS {amount}." },
+  bank_upload_hint: { sw: "Ukishalipa kwa njia yoyote (benki, simu, wakala), pakia risiti hapa ili tuthibitishe malipo yako.", en: "After paying by any route (bank, phone, agent), upload the receipt here so we can verify your payment.", fr: "Après le paiement (banque, téléphone, agent), téléversez le reçu ici pour que nous le vérifiions." },
+  receipt_amount_label: { sw: "Kiasi ulicholipa (TZS)", en: "Amount you paid (TZS)", fr: "Montant payé (TZS)" },
+  receipt_reference_label: { sw: "Namba ya muamala (hiari)", en: "Transaction number (optional)", fr: "Numéro de transaction (facultatif)" },
+  receipt_file_label: { sw: "Picha au PDF ya risiti", en: "Receipt photo or PDF", fr: "Photo ou PDF du reçu" },
+  receipt_submit_btn: { sw: "Tuma risiti", en: "Send receipt", fr: "Envoyer le reçu" },
+  receipt_uploading: { sw: "Inatuma...", en: "Sending...", fr: "Envoi..." },
+  receipt_uploaded: { sw: "Risiti imetumwa. Tutaithibitisha hivi karibuni.", en: "Receipt sent. We will verify it shortly.", fr: "Reçu envoyé. Nous le vérifierons sous peu." },
+  receipt_too_big: { sw: "Faili ni kubwa sana (juu ya MB {mb}).", en: "The file is too large (over {mb} MB).", fr: "Le fichier est trop volumineux (plus de {mb} Mo)." },
+  receipt_pending_banner: { sw: "Una risiti inayosubiri uthibitisho. Usilipe tena hadi ijibiwe.", en: "You have a receipt waiting for review. Do not pay again until it is answered.", fr: "Vous avez un reçu en attente de vérification. Ne payez pas à nouveau avant la réponse." },
+  receipts_mine_title: { sw: "Risiti zangu", en: "My receipts", fr: "Mes reçus" },
+  receipt_status_pending: { sw: "Inasubiri uthibitisho", en: "Waiting for review", fr: "En attente" },
+  receipt_status_approved: { sw: "Imekubaliwa", en: "Approved", fr: "Approuvé" },
+  receipt_status_rejected: { sw: "Imekataliwa", en: "Rejected", fr: "Rejeté" },
+  receipt_reason: { sw: "Sababu: {reason}", en: "Reason: {reason}", fr: "Motif : {reason}" },
+  tab_receipts: { sw: "Risiti za benki", en: "Bank receipts", fr: "Reçus bancaires" },
+  receipts_admin_hint: { sw: "Linganisha kila risiti na taarifa ya benki. Ukikubali, andika kiasi kilichoingia kweli; ziada ya ada inaenda kwenye wallet ya mteja.", en: "Check each receipt against the bank statement. When approving, enter the amount that really arrived; anything above the fee goes to the customer's wallet.", fr: "Comparez chaque reçu au relevé bancaire. À l'approbation, saisissez le montant réellement reçu ; l'excédent va au portefeuille du client." },
+  receipts_empty: { sw: "Hakuna risiti.", en: "No receipts.", fr: "Aucun reçu." },
+  th_claimed: { sw: "Alicholipa", en: "Claimed", fr: "Déclaré" },
+  th_reference: { sw: "Namba ya muamala", en: "Reference", fr: "Référence" },
+  receipt_view_btn: { sw: "Angalia risiti", en: "View receipt", fr: "Voir le reçu" },
+  receipt_approve_btn: { sw: "Kubali", en: "Approve", fr: "Approuver" },
+  receipt_reject_btn: { sw: "Kataa", en: "Reject", fr: "Rejeter" },
+  receipt_amount_received_label: { sw: "Kiasi kilichoingia benki", en: "Amount received in the bank", fr: "Montant reçu en banque" },
+  receipt_confirm_approve: { sw: "Kukubali malipo ya TZS {amount} ya {name}?", en: "Approve the TZS {amount} payment from {name}?", fr: "Approuver le paiement de TZS {amount} de {name} ?" },
+  receipt_reject_prompt: { sw: "Sababu ya kukataa (mteja ataiona):", en: "Reason for rejecting (the customer will see it):", fr: "Motif du rejet (le client le verra) :" },
+  receipt_approved_notice: { sw: "Malipo ya {name} yamekubaliwa.", en: "{name}'s payment was approved.", fr: "Le paiement de {name} a été approuvé." },
+  receipt_rejected_notice: { sw: "Risiti ya {name} imekataliwa.", en: "{name}'s receipt was rejected.", fr: "Le reçu de {name} a été rejeté." },
+
+  // ---- payment history window ----
+  history_more_btn: { sw: "Onyesha zaidi ({n})", en: "Show more ({n})", fr: "Afficher plus ({n})" },
+  history_close_btn: { sw: "Funga", en: "Close", fr: "Fermer" },
+  history_window_note: { sw: "Unaona malipo ya miezi 12 ya mwisho tu.", en: "You can see the last 12 months of payments only.", fr: "Vous ne voyez que les paiements des 12 derniers mois." },
+
+  // ---- customer dashboard (dark / light redesign) ----
+  cx_menu: { sw: "Menyu", en: "Menu", fr: "Menu" },
+  cx_overview: { sw: "Muhtasari", en: "Overview", fr: "Aperçu" },
+  nav_dashboard: { sw: "Dashibodi", en: "Dashboard", fr: "Tableau de bord" },
+  nav_subscription: { sw: "Usajili", en: "Subscription", fr: "Abonnement" },
+  nav_wallet: { sw: "Wallet", en: "Wallet", fr: "Portefeuille" },
+  nav_payments: { sw: "Malipo", en: "Payments", fr: "Paiements" },
+  nav_history: { sw: "Historia", en: "History", fr: "Historique" },
+  nav_settings: { sw: "Mipangilio", en: "Settings", fr: "Paramètres" },
+  cx_tab_home: { sw: "Nyumbani", en: "Home", fr: "Accueil" },
+  cx_customer: { sw: "Mteja", en: "Customer", fr: "Client" },
+  cx_tip_title: { sw: "Lipa kwa sekunde", en: "Pay in seconds", fr: "Payez en quelques secondes" },
+  cx_tip_text: { sw: "Idhinisha ombi kwenye simu yako kwa PIN yako. Ndiyo yote.", en: "Approve the request on your phone with your PIN. That's it.", fr: "Approuvez la demande sur votre téléphone avec votre PIN. C'est tout." },
+  cx_bank_grade: { sw: "Usalama wa kiwango cha benki", en: "Bank-grade security", fr: "Sécurité de niveau bancaire" },
+  cx_language: { sw: "Lugha", en: "Language", fr: "Langue" },
+  cx_appearance: { sw: "Mwonekano", en: "Appearance", fr: "Apparence" },
+  cx_theme_dark: { sw: "Giza", en: "Dark", fr: "Sombre" },
+  cx_theme_light: { sw: "Mwanga", en: "Light", fr: "Clair" },
+  cx_close: { sw: "Funga", en: "Close", fr: "Fermer" },
+  cx_active_sub: { sw: "Usajili hai", en: "Active subscription", fr: "Abonnement actif" },
+  cx_payment_due: { sw: "Malipo yanahitajika", en: "Payment due", fr: "Paiement dû" },
+  cx_sub_active_pill: { sw: "Usajili uko hai", en: "Subscription active", fr: "Abonnement actif" },
+  cx_welcome_back: { sw: "Karibu tena,", en: "Welcome back,", fr: "Bon retour," },
+  cx_hero_paid: { sw: "Umelipia mwezi huu na usajili wako uko hai. Kila kitu kiko sawa.", en: "You have paid for this month and your subscription is active. Everything is up to date.", fr: "Vous avez payé ce mois et votre abonnement est actif. Tout est à jour." },
+  cx_hero_due: { sw: "Ada ya mwezi huu bado haijalipwa. Chagua njia ya kulipa hapa chini.", en: "This month's fee is not paid yet. Choose how to pay below.", fr: "Les frais de ce mois ne sont pas encore payés. Choisissez comment payer ci-dessous." },
+  cx_stat_fee: { sw: "Ada ya mwezi", en: "Monthly fee", fr: "Frais mensuels" },
+  cx_stat_next: { sw: "Mzunguko ujao", en: "Next billing", fr: "Prochaine facturation" },
+  cx_stat_plan: { sw: "Mpango", en: "Plan", fr: "Formule" },
+  cx_plan_household: { sw: "Nyumbani", en: "Household", fr: "Résidentiel" },
+  cx_plan_institution: { sw: "Taasisi", en: "Institution", fr: "Institution" },
+  cx_active: { sw: "Hai", en: "Active", fr: "Actif" },
+  cx_due: { sw: "Inadaiwa", en: "Due", fr: "Dû" },
+  cx_quick_payment: { sw: "Malipo ya haraka", en: "Quick payment", fr: "Paiement rapide" },
+  cx_choose_pay: { sw: "Chagua njia ya kulipa", en: "Choose how to pay", fr: "Choisissez comment payer" },
+  cx_next_due: { sw: "Mzunguko ujao", en: "Next billing", fr: "Prochaine facturation" },
+  cx_pay_mm: { sw: "Mobile Money", en: "Mobile Money", fr: "Mobile Money" },
+  cx_pay_mm_sub: { sw: "Malipo ya papo hapo", en: "Instant payment", fr: "Paiement instantané" },
+  cx_pay_qr_sub: { sw: "Changanua na ulipe", en: "Scan and Pay", fr: "Scanner et payer" },
+  cx_pay_bank_title: { sw: "Uhamisho wa benki", en: "Bank Transfer", fr: "Virement bancaire" },
+  cx_pay_bank_sub: { sw: "Pakia risiti", en: "Upload receipt", fr: "Téléverser le reçu" },
+  cx_soon: { sw: "Hivi karibuni", en: "Soon", fr: "Bientôt" },
+  cx_mobile_number: { sw: "Namba ya simu", en: "Mobile number", fr: "Numéro mobile" },
+  cx_registered: { sw: "Imesajiliwa", en: "Registered", fr: "Enregistré" },
+  cx_pay_other: { sw: "Lipa kwa namba nyingine", en: "Pay from another number", fr: "Payer depuis un autre numéro" },
+  cx_use_registered: { sw: "Tumia namba yangu", en: "Use my number", fr: "Utiliser mon numéro" },
+  cx_break_sub: { sw: "Ada ya mwezi", en: "Monthly subscription", fr: "Abonnement mensuel" },
+  cx_break_fee: { sw: "Gharama ya muamala", en: "Transaction fee", fr: "Frais de transaction" },
+  cx_break_total: { sw: "Jumla leo", en: "Total today", fr: "Total aujourd'hui" },
+  cx_pay_btn: { sw: "Lipa TZS {amount}", en: "Pay TZS {amount}", fr: "Payer TZS {amount}" },
+  cx_confirm_phone: { sw: "Idhinisha kwenye simu yako", en: "Approve on your phone", fr: "Approuvez sur votre téléphone" },
+  cx_wallet_pay: { sw: "Lipa kwa wallet (TZS {amount})", en: "Pay from wallet (TZS {amount})", fr: "Payer avec le portefeuille (TZS {amount})" },
+  cx_step1: { sw: "Ombi limetumwa", en: "Request sent", fr: "Demande envoyée" },
+  cx_step1s: { sw: "kwenye simu yako", en: "to your phone", fr: "sur votre téléphone" },
+  cx_step2: { sw: "Weka PIN yako", en: "Enter your PIN", fr: "Saisissez votre PIN" },
+  cx_step2s: { sw: "kuidhinisha", en: "to approve", fr: "pour approuver" },
+  cx_step3: { sw: "Risiti tayari", en: "Receipt ready", fr: "Reçu prêt" },
+  cx_step3s: { sw: "papo hapo", en: "instantly", fr: "instantanément" },
+  cx_secure_title: { sw: "Malipo salama yaliyosimbwa", en: "Secure & encrypted payment", fr: "Paiement sécurisé et chiffré" },
+  cx_secure_text: { sw: "Unaidhinisha kwenye simu yako kwa PIN yako. Sisi hatuwezi kuiona.", en: "You confirm on your phone with your PIN. We never see it.", fr: "Vous confirmez sur votre téléphone avec votre PIN. Nous ne le voyons jamais." },
+  cx_paid_title: { sw: "Umelipa mwezi huu", en: "Paid for this month", fr: "Payé pour ce mois" },
+  cx_paid_text: { sw: "Asante! Malipo yako yamepokelewa.", en: "Thank you! Your payment was received.", fr: "Merci ! Votre paiement a été reçu." },
+  cx_qr_scan_pay: { sw: "Changanua kulipa TZS {amount}", en: "Scan to pay TZS {amount}", fr: "Scannez pour payer TZS {amount}" },
+  cx_qr_secure_title: { sw: "Msimbo wa mara moja", en: "One-time code", fr: "Code à usage unique" },
+  cx_qr_secure_text: { sw: "QR hii inafanya kazi kwa malipo haya tu na huacha kufanya kazi ikiisha muda.", en: "This QR only works for this payment and stops working when it expires.", fr: "Ce QR ne fonctionne que pour ce paiement et expire ensuite." },
+  cx_drop_receipt: { sw: "Weka risiti yako hapa au", en: "Drop your receipt or", fr: "Déposez votre reçu ou" },
+  cx_browse: { sw: "chagua faili", en: "browse", fr: "parcourir" },
+  cx_drop_hint: { sw: "JPG, PNG au PDF - hadi MB {mb}", en: "JPG, PNG or PDF - up to {mb} MB", fr: "JPG, PNG ou PDF - jusqu'à {mb} Mo" },
+  cx_balance: { sw: "Salio linalopatikana", en: "Available balance", fr: "Solde disponible" },
+  cx_wallet_active: { sw: "Wallet iko hai", en: "Wallet active", fr: "Portefeuille actif" },
+  cx_wallet_hint: { sw: "Weka pesa mara moja, lipa kwa mguso mmoja.", en: "Top up once, pay in one tap.", fr: "Rechargez une fois, payez en un geste." },
+  cx_add_funds: { sw: "Weka pesa", en: "Add funds", fr: "Ajouter des fonds" },
+  cx_topup_title: { sw: "Weka pesa kwenye wallet", en: "Add funds to your wallet", fr: "Ajouter des fonds au portefeuille" },
+  cx_topup_amount: { sw: "Kiasi (TZS)", en: "Amount (TZS)", fr: "Montant (TZS)" },
+  cx_topup_send: { sw: "Tuma ombi la malipo", en: "Send payment request", fr: "Envoyer la demande" },
+  cx_topup_done: { sw: "Pesa zimeongezwa kwenye wallet yako.", en: "The money was added to your wallet.", fr: "L'argent a été ajouté à votre portefeuille." },
+  cx_topup_bg: { sw: "Funga - salio litasasishwa malipo yakikamilika", en: "Close - your balance updates when it completes", fr: "Fermer - le solde se met à jour à la fin" },
+  cx_activity: { sw: "Shughuli", en: "Activity", fr: "Activité" },
+  cx_recent_payments: { sw: "Malipo ya hivi karibuni", en: "Recent payments", fr: "Paiements récents" },
+  cx_no_history: { sw: "Hakuna historia ya malipo bado", en: "No payment history yet", fr: "Aucun historique de paiement" },
+  cx_no_history_text: { sw: "Malipo yako na risiti zitaonekana hapa pale utakapofanya la kwanza.", en: "Your completed payments and receipts will appear here as soon as you make your first one.", fr: "Vos paiements et reçus apparaîtront ici dès votre premier paiement." },
+  cx_first_payment: { sw: "Fanya malipo yako ya kwanza", en: "Make your first payment", fr: "Faites votre premier paiement" },
+  cx_status_completed: { sw: "Imekamilika", en: "Completed", fr: "Terminé" },
+  cx_status_pending: { sw: "Inasubiri", en: "Pending", fr: "En attente" },
+  cx_status_failed: { sw: "Imeshindwa", en: "Failed", fr: "Échoué" },
+  cx_status_review: { sw: "Inakaguliwa", en: "Under review", fr: "En vérification" },
+  cx_your_experience: { sw: "Uzoefu wako", en: "Your experience", fr: "Votre expérience" },
+  cx_how_doing: { sw: "Tunafanyaje?", en: "How are we doing?", fr: "Comment faisons-nous ?" },
+  cx_fb_sub: { sw: "Maoni yako yanatusaidia kuboresha huduma kwenye eneo lako.", en: "Your feedback helps us improve the service for your area.", fr: "Vos retours nous aident à améliorer le service dans votre zone." },
+  cx_rate_excellent: { sw: "Bora sana", en: "Excellent", fr: "Excellent" },
+  cx_rate_good: { sw: "Nzuri", en: "Good", fr: "Bien" },
+  cx_rate_average: { sw: "Wastani", en: "Average", fr: "Moyen" },
+  cx_rate_poor: { sw: "Mbaya", en: "Poor", fr: "Mauvais" },
+  cx_fb_comment: { sw: "Tuambie zaidi (hiari)", en: "Tell us more (optional)", fr: "Dites-nous en plus (facultatif)" },
+  cx_fb_send: { sw: "Tuma", en: "Send", fr: "Envoyer" },
+  cx_fb_thanks: { sw: "Asante kwa maoni yako.", en: "Thanks for your feedback.", fr: "Merci pour votre avis." },
+  cx_help_title: { sw: "Unahitaji msaada?", en: "Need help?", fr: "Besoin d'aide ?" },
+  cx_help_sub: { sw: "Ripoti tatizo au uliza swali.", en: "Report a problem or ask a question.", fr: "Signalez un problème ou posez une question." },
+  cx_report_title: { sw: "Ripoti tatizo", en: "Report a problem", fr: "Signaler un problème" },
+  cx_report_msg: { sw: "Eleza tatizo lako...", en: "Describe the problem...", fr: "Décrivez le problème..." },
+  cx_paid_amount: { sw: "Kiasi kilicholipwa", en: "Amount paid", fr: "Montant payé" },
+  cx_paid_period: { sw: "Mwezi", en: "Period", fr: "Période" },
+
+  // ---- login / register / forgot password (themed) ----
+  cx_customer_portal: { sw: "Tovuti ya mteja", en: "Customer portal", fr: "Espace client" },
+  cx_auth_headline_1: { sw: "Lipa kwa sekunde.", en: "Pay in seconds.", fr: "Payez en quelques secondes." },
+  cx_auth_headline_2: { sw: "Dhibiti kila kitu.", en: "Stay in control.", fr: "Gardez le contrôle." },
+  cx_auth_sub: { sw: "Lipa ada yako kwa Mobile Money, QR au benki, fuatilia malipo yako na uweke pesa kwenye wallet - yote mahali pamoja.", en: "Pay your fee by Mobile Money, QR or bank, follow your payments and top up your wallet - all in one place.", fr: "Payez vos frais par Mobile Money, QR ou banque, suivez vos paiements et rechargez votre portefeuille - au même endroit." },
+  cx_login_title: { sw: "Karibu tena", en: "Welcome back", fr: "Bon retour" },
+  cx_login_sub: { sw: "Ingia kwenye akaunti yako.", en: "Log in to your account.", fr: "Connectez-vous à votre compte." },
+  cx_have_account: { sw: "Tayari una akaunti?", en: "Already have an account?", fr: "Vous avez déjà un compte ?" },
+  cx_login_here: { sw: "Ingia", en: "Log in", fr: "Se connecter" },
+  cx_registered_title: { sw: "Umesajiliwa!", en: "You're registered!", fr: "Vous êtes inscrit !" },
+  cx_go_login: { sw: "Nenda kuingia", en: "Go to log in", fr: "Aller à la connexion" },
+  cx_section_you: { sw: "Taarifa zako", en: "Your details", fr: "Vos informations" },
+  cx_section_place: { sw: "Eneo lako", en: "Your location", fr: "Votre emplacement" },
+  cx_otp_register_sub: { sw: "Tumekutumia msimbo kwa SMS. Uweke hapa ili kukamilisha usajili.", en: "We texted you a code. Enter it here to finish registering.", fr: "Nous vous avons envoyé un code par SMS. Saisissez-le pour terminer l'inscription." },
+};
+
+let currentLang = (typeof localStorage !== "undefined" && localStorage.getItem(STORAGE_KEY)) || "sw";
+const listeners = new Set();
+
+export function getLang() {
+  return currentLang;
+}
+
+export function setLang(lang) {
+  if (!LANGUAGES[lang] || lang === currentLang) return;
+  currentLang = lang;
+  localStorage.setItem(STORAGE_KEY, lang);
+  listeners.forEach((fn) => fn());
+}
+
+export function subscribe(fn) {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
+// t("welcome", {name: "Amina"}) -> "Karibu, Amina" (in whichever language is active)
+export function t(key, vars) {
+  const entry = dict[key];
+  let s = entry ? entry[currentLang] || entry.sw || key : key;
+  if (vars) for (const [k, v] of Object.entries(vars)) s = s.replaceAll(`{${k}}`, v);
+  return s;
+}

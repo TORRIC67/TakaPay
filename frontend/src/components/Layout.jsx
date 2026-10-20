@@ -1,0 +1,26 @@
+import { Link } from "react-router-dom";
+import { useAuth } from "../auth.jsx";
+import { useI18n } from "../useI18n";
+import LanguageSwitcher from "./LanguageSwitcher.jsx";
+import { BrandMark } from "../brand.jsx";
+
+// Green top bar with the app name, optional navigation (tabs) and the logout button
+export default function Layout({ nav, children }) {
+  const { user, logout } = useAuth();
+  const { t } = useI18n();
+  return (
+    <div>
+      <header className="topbar">
+        <div className="brand"><BrandMark size={28} /></div>
+        {nav}
+        <div className="who">
+          <LanguageSwitcher dark />
+          <Link to="/change-password" className="btn ghost" style={{ textDecoration: "none" }}>{t("change_password_link")}</Link>
+          <span>{user?.full_name}</span>
+          <button className="btn ghost" onClick={logout}>{t("logout")}</button>
+        </div>
+      </header>
+      <main className="page">{children}</main>
+    </div>
+  );
+}

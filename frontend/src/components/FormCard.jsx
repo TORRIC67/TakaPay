@@ -1,0 +1,102 @@
+import { useState } from "react";
+import { useI18n } from "../useI18n";
+import OtpVerify from "./OtpVerify.jsx";
+
+// A generic form. Give it a list of fields and an async onSubmit(values) that returns a success message.
+// Used for: register customer, register driver + truck, register bin, self-registration.
+// onSubmit may also return { verify: {phone, otp_sent, otp_error}, successText } instead of a string:
+// the form is then replaced by the OTP step, and successText is shown once the code is accepted.
+export default function FormCard({ title, hint, fields, onSubmit, submitLabel, withLocation = false, latField = "latitude", lngField = "longitude" }) {
+  const { t } = useI18n();
+  const empty = () => Object.fromEntries(fields.map((f) => [f.name, ""]));
+  const [values, setValues] = useState(empty);
+  const [msg, setMsg] = useState(null); // {ok, text}
+  const [busy, setBusy] = useState(false);
+  const [verify, setVerify] = useState(null); // {phone, otp_sent, otp_error, successText} while waiting for the OTP
+  const set = (name, v) => setValues((prev) => ({ ...prev, [name]: v }));
+
+  // Fill latitude/longitude from the phone/computer GPS
+  function fillMyLocation() {
+    if (!navigator.geolocation) return setMsg({ ok: false, text: t("geo_unsupported") });
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        set(latField, pos.coords.latitude.toFixed(6));
+        set(lngField, pos.coords.longitude.toFixed(6));
+      },
+      () => setMsg({ ok: false, text: t("geo_failed") })
+    );
+  }
+
+  async function submit(e) {
+    e.preventDefault();
+    setBusy(true);
+    setMsg(null);
+    try {
+      const payload = {};
+      for (const f of fields) {
+        const v = values[f.name];
+        if (v === "" && !f.required) continue; // optional and empty: leave out
+        payload[f.name] = f.type === "number" || f.numeric ? Number(v) : v;
+      }
+      const result = await onSubmit(payload);
+      if (result && typeof result === "object") {
+        setVerify(result); // registered but NOT verified yet: ask for the OTP before saying "done"
+        return;
+      }
+      setMsg({ ok: true, text: result || t("saved_generic") });
+      setValues(empty());
+    } catch (err) {
+      setMsg({ ok: false, text: err.message });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (verify) {
+    return (
+      <div className="card form">
+        <OtpVerify
+          phone={verify.verify.phone}
+          otpSent={verify.verify.otp_sent}
+          otpError={verify.verify.otp_error}
+          onVerified={() => { setMsg({ ok: true, text: verify.successText }); setValues(empty()); setVerify(null); }}
+          onCancel={() => setVerify(null)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <form className="card form" onSubmit={submit}>
+      <h3>{title}</h3>
+      {hint && <p className="muted" style={{ margin: 0 }}>{hint}</p>}
+      <div className="grid2">
+        {fields.map((f) => (
+          <label key={f.name}>
+            {f.labelKey ? t(f.labelKey) : f.label}
+            {f.type === "select" ? (
+              <select required={f.required} value={values[f.name]} onChange={(e) => set(f.name, e.target.value)}>
+                <option value="" disabled>{f.placeholder || "--"}</option>
+                {(f.options || []).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            ) : (
+              <input
+                type={f.type || "text"}
+                step={f.step}
+                required={f.required}
+                placeholder={f.placeholder}
+                value={values[f.name]}
+                onChange={(e) => set(f.name, e.target.value)}
+              />
+            )}
+          </label>
+        ))}
+      </div>
+      {withLocation && (
+        <button type="button" className="btn ghost" onClick={fillMyLocation}>{t("use_my_location")}</button>
+      )}
+      <button className="btn" disabled={busy}>{busy ? t("saving") : (submitLabel ?? t("save"))}</button>
+      {msg && <p className={msg.ok ? "ok" : "err"} style={{ margin: 0 }}>{msg.text}</p>}
+    </form>
+  );
+}
